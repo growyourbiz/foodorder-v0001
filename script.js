@@ -47,16 +47,14 @@ function renderFoodMenu() {
             <div id="food-card-${item.id}" class="food-card">
                 <img src="${item.image}" alt="${item.name}" class="w-24 h-24 sm:w-36 sm:h-36 rounded-lg object-cover mb-4 sm:mb-0 sm:mr-6">
                 <div class="flex-1">
-                    <h3 class="text-lg font-semibold text-gray-800">${item.name}</h3>
-                    <p class="text-sm text-gray-600 mb-2">${item.description}</p>
+                    <h3 class="text-lg font-bold text-gray-800">${item.name}</h3> <p class="text-sm text-gray-600 mb-2">${item.description}</p>
                     ${sizeOptionsHtml}
                     <div class="flex items-center justify-between mt-3">
                         <span id="price-${item.id}" class="text-xl font-bold text-red-600">${formatCurrency(initialPrice)} บาท</span>
                         <button class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 add-to-cart-btn"
                                 data-item-id="${item.id}"
                                 data-default-size="${item.defaultSize}">
-                            เพิ่มลงตะกร้า
-                        </button>
+                            เพิ่ม </button>
                     </div>
                 </div>
             </div>
@@ -85,13 +83,12 @@ function renderOrderSummary() {
                 <div id="order-item-${key}" class="order-item">
                     <div class="order-item-details">
                         <h4 class="text-base font-medium">${orderItem.item.name} (${orderItem.size === 'small' ? 'เล็ก' : orderItem.size === 'medium' ? 'กลาง' : 'ใหญ่'})</h4>
-                        <p class="text-sm text-gray-600">ราคา: ${formatCurrency(displayPrice)} x ${orderItem.quantity}</p>
-                        <p class="text-base font-semibold text-gray-800">รวม: ${formatCurrency(itemTotal)} บาท</p>
+                        <p class="text-sm text-gray-600">ราคา: ${formatCurrency(displayPrice)} x <span class="font-bold">${orderItem.quantity}</span> = <span class="font-bold">${formatCurrency(itemTotal)}</span> บาท</p>
                         <div class="mt-1">
                             <span class="note-toggle" data-item-key="${key}">
                                 ${orderItem.note ? 'แก้ไขหมายเหตุ' : 'ใส่หมายเหตุ (กดที่นี่)'}
                             </span>
-                            <textarea class="note-input hidden" rows="2" placeholder="เพิ่มหมายเหตุสำหรับรายการนี้"
+                            <textarea class="note-input hidden" rows="2" placeholder="ใส่หมายเหตุ (ถ้ามี)"
                                 data-item-key="${key}">${orderItem.note || ''}</textarea>
                         </div>
                     </div>
@@ -122,21 +119,22 @@ function renderOrderSummary() {
     let deliveryFeeText = '0.00 บาท';
     const deliveryFeeElement = document.getElementById('delivery-fee');
 
-    if (subtotal < deliveryConditions.freeDeliveryThreshold && subtotal > 0) {
+    // เงื่อนไขค่าส่ง: ยอดสั่ง >= 100 ส่งฟรี ถ้า <100 ค่าส่ง 10 บาท
+    if (subtotal >= deliveryConditions.freeDeliveryThreshold) {
+        deliveryFeeText = 'ส่งฟรีค่ะ';
+        deliveryFeeElement.classList.remove('text-red-500');
+        deliveryFeeElement.classList.add('text-green-600');
+    } else if (subtotal > 0 && subtotal < deliveryConditions.freeDeliveryThreshold) {
         deliveryFee = deliveryConditions.deliveryFee;
         deliveryFeeText = `${formatCurrency(deliveryFee)} บาท`;
         deliveryFeeElement.classList.remove('text-green-600');
         deliveryFeeElement.classList.add('text-red-500');
-    } else if (subtotal >= deliveryConditions.freeDeliveryThreshold) {
-        deliveryFeeText = 'ส่งฟรีค่ะ';
-        deliveryFeeElement.classList.remove('text-red-500');
-        deliveryFeeElement.classList.add('text-green-600');
     } else { // subtotal is 0
         deliveryFeeText = '0.00 บาท';
         deliveryFeeElement.classList.remove('text-green-600');
         deliveryFeeElement.classList.add('text-red-500');
     }
-
+    
     const totalAmount = subtotal + deliveryFee;
 
     document.getElementById('subtotal').textContent = formatCurrency(subtotal) + ' บาท';
@@ -190,7 +188,7 @@ function addItemToCart(itemId, defaultSize) {
         currentOrder[key] = {
             item: item,
             size: selectedSize,
-            quantity: 1,
+            quantity: 1, // Default quantity = 1
             calculatedPrice: calculatedPrice,
             note: '' // Initialize with empty note
         };
@@ -248,35 +246,55 @@ function handleNoteInput(event) {
 function captureOrderSummary() {
     const summarySection = document.getElementById('summary-section'); // The entire summary card
 
-    // Temporarily hide buttons that shouldn't be in the screenshot
-    const checkoutBtn = document.getElementById('checkout-button');
-    const captureBtn = document.getElementById('capture-summary-button');
-    const noteToggles = document.querySelectorAll('.note-toggle');
-    const noteInputs = document.querySelectorAll('.note-input');
-    const qtyControls = document.querySelectorAll('.quantity-control');
-    const removeBtns = document.querySelectorAll('.remove-item-btn');
+    // Temporarily hide elements that shouldn't be in the screenshot
+    const elementsToHide = [
+        document.getElementById('checkout-button'),
+        document.getElementById('capture-summary-button'),
+        ...document.querySelectorAll('.note-toggle'),
+        ...document.querySelectorAll('.note-input'), // Hide note inputs even if visible
+        ...document.querySelectorAll('.quantity-control'),
+        ...document.querySelectorAll('.remove-item-btn')
+    ];
 
-    checkoutBtn.style.display = 'none';
-    captureBtn.style.display = 'none';
-    noteToggles.forEach(el => el.style.display = 'none');
-    noteInputs.forEach(el => el.style.display = 'none'); // Hide note inputs even if visible
-    qtyControls.forEach(el => el.style.display = 'none');
-    removeBtns.forEach(el => el.style.display = 'none');
+    elementsToHide.forEach(el => { if(el) el.style.display = 'none'; });
+
+    // Store original display state of notes to restore later
+    const originalNoteDisplayStates = [];
 
     // Make sure notes are visible if they have content before screenshot
-    noteToggles.forEach(toggle => {
-        const itemKey = toggle.dataset.itemKey;
-        if (currentOrder[itemKey] && currentOrder[itemKey].note) {
-            // Create a temporary span to display the note
+    // Also display quantities more clearly for screenshot
+    document.querySelectorAll('.order-item-details').forEach(itemDetailsDiv => {
+        const itemKey = itemDetailsDiv.querySelector('.note-toggle').dataset.itemKey;
+        const orderItem = currentOrder[itemKey];
+
+        // Ensure quantities are visible and bold in the summary
+        const qtySpan = itemDetailsDiv.querySelector('.text-gray-600 span.font-bold');
+        if (qtySpan) qtySpan.textContent = orderItem.quantity; // Make sure it's the raw number
+
+        // Ensure total for item is bold
+        const itemTotalSpan = itemDetailsDiv.querySelector('.text-gray-800 span.font-bold');
+        if (itemTotalSpan) itemTotalSpan.textContent = formatCurrency(orderItem.quantity * orderItem.calculatedPrice);
+
+
+        // Handle notes for screenshot
+        const noteToggle = itemDetailsDiv.querySelector('.note-toggle');
+        const noteInput = itemDetailsDiv.querySelector('.note-input');
+        
+        if (orderItem.note) {
+            // Store original state and hide toggle
+            originalNoteDisplayStates.push({ toggle: noteToggle, input: noteInput, originalToggleDisplay: noteToggle.style.display });
+            noteToggle.style.display = 'none';
+
+            // Create a temporary span to display the note for screenshot
             const tempNoteSpan = document.createElement('span');
-            tempNoteSpan.className = 'text-sm text-gray-700 block mt-1';
-            tempNoteSpan.textContent = `หมายเหตุ: ${currentOrder[itemKey].note}`;
-            toggle.parentNode.insertBefore(tempNoteSpan, toggle.nextSibling);
-            toggle.classList.add('hidden'); // Hide the toggle itself
-            toggle.dataset.tempNoteSpan = true; // Mark for removal later
+            tempNoteSpan.className = 'text-sm text-gray-700 block mt-1 screenshot-note'; // Add a class for easy removal
+            tempNoteSpan.textContent = `หมายเหตุ: ${orderItem.note}`;
+            noteInput.parentNode.insertBefore(tempNoteSpan, noteInput.nextSibling); // Insert after input (which is hidden)
+        } else {
+             // If no note, hide the "ใส่หมายเหตุ" toggle for screenshot
+            if (noteToggle) noteToggle.style.display = 'none';
         }
     });
-
 
     // Use html2canvas to capture the element
     html2canvas(summarySection, {
@@ -301,31 +319,38 @@ function captureOrderSummary() {
         modal.classList.remove('hidden'); // Show the modal
 
         // Restore hidden elements after capturing
-        checkoutBtn.style.display = '';
-        captureBtn.style.display = '';
-        noteToggles.forEach(el => el.style.display = '');
-        noteInputs.forEach(el => el.style.display = 'hidden'); // Keep hidden unless user clicks
-        qtyControls.forEach(el => el.style.display = 'flex'); // Restore flex display
-        removeBtns.forEach(el => el.style.display = '');
-
-        // Remove temporary note spans
-        document.querySelectorAll('[data-temp-note-span="true"]').forEach(el => {
-            el.remove();
-        });
-        document.querySelectorAll('.note-toggle').forEach(el => {
-            el.classList.remove('hidden'); // Show the toggle again
+        elementsToHide.forEach(el => {
+            if (el) {
+                // Special handling for quantity-control which should be flex
+                if (el.classList.contains('quantity-control')) {
+                    el.style.display = 'flex';
+                } else {
+                    el.style.display = ''; // Restore default display
+                }
+            }
         });
 
+        // Restore notes display
+        originalNoteDisplayStates.forEach(state => {
+            if (state.toggle) state.toggle.style.display = state.originalToggleDisplay;
+            if (state.input) state.input.classList.add('hidden'); // Ensure input is hidden
+        });
+        document.querySelectorAll('.screenshot-note').forEach(el => el.remove()); // Remove temporary note spans
+        
     }).catch(error => {
         console.error('Error capturing summary:', error);
         alert('เกิดข้อผิดพลาดในการสร้างภาพสรุปออเดอร์');
         // Ensure buttons are restored even if there's an error
-        checkoutBtn.style.display = '';
-        captureBtn.style.display = '';
-        noteToggles.forEach(el => el.style.display = '');
-        noteInputs.forEach(el => el.style.display = 'hidden');
-        qtyControls.forEach(el => el.style.display = 'flex');
-        removeBtns.forEach(el => el.style.display = '');
+        elementsToHide.forEach(el => {
+            if (el) {
+                 if (el.classList.contains('quantity-control')) {
+                    el.style.display = 'flex';
+                } else {
+                    el.style.display = '';
+                }
+            }
+        });
+        document.querySelectorAll('.screenshot-note').forEach(el => el.remove());
     });
 }
 
@@ -388,11 +413,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let deliveryFee = 0;
-        if (finalSubtotal < deliveryConditions.freeDeliveryThreshold && finalSubtotal > 0) {
+        if (finalSubtotal >= deliveryConditions.freeDeliveryThreshold) {
+            orderDetails += `\nค่าจัดส่ง: ส่งฟรี\n`;
+        } else if (finalSubtotal > 0 && finalSubtotal < deliveryConditions.freeDeliveryThreshold) {
             deliveryFee = deliveryConditions.deliveryFee;
             orderDetails += `\nค่าจัดส่ง: ${formatCurrency(deliveryFee)} บาท\n`;
-        } else if (finalSubtotal >= deliveryConditions.freeDeliveryThreshold) {
-            orderDetails += `\nค่าจัดส่ง: ส่งฟรี\n`;
         } else {
              orderDetails += `\nค่าจัดส่ง: 0.00 บาท\n`; // Case of empty cart
         }
