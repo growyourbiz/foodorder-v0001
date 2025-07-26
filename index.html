@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สั่งอาหารออนไลน์</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 font-sarabun">
+    <div class="min-h-screen flex items-center justify-center p-4 sm:p-6">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-5xl overflow-hidden">
+            <div class="bg-gradient-to-r from-red-600 to-orange-500 p-4 sm:p-6 text-white text-center">
+                <h1 class="text-2xl sm:text-3xl font-bold">เมนูอาหารเดลิเวอรี่</h1>
+                <p class="text-red-100 text-sm sm:text-base mt-1">เลือกเมนูโปรดของคุณ แล้วเราจะไปส่งถึงที่!</p>
+            </div>
+
+            <div class="p-4 sm:p-6 lg:flex lg:space-x-6">
+                <div class="lg:w-2/3">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">รายการอาหาร</h2>
+                    <div id="food-menu" class="space-y-4">
+                        </div>
+                </div>
+
+                <div id="summary-section" class="lg:w-1/3 mt-8 lg:mt-0 bg-gray-50 p-4 sm:p-5 rounded-lg shadow-inner sticky top-4 self-start">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">สรุปรายการสั่งซื้อ</h2>
+                    <div id="order-summary" class="space-y-3">
+                        <div class="text-center text-gray-500 py-4" id="empty-order-message">
+                            ยังไม่มีรายการในตะกร้า
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 pt-4 border-t border-gray-200 space-y-2">
+                        <div class="flex justify-between items-center text-gray-700">
+                            <span>ราคารวมอาหาร:</span>
+                            <span id="subtotal" class="font-medium text-lg">0.00 บาท</span>
+                        </div>
+                        <div class="flex justify-between items-center text-gray-700">
+                            <span>ค่าจัดส่ง:</span>
+                            <span id="delivery-fee" class="font-medium text-lg text-red-500">0.00 บาท</span>
+                        </div>
+                        <div class="flex justify-between items-center text-red-600 font-bold text-xl mt-4 pt-2 border-t border-gray-300">
+                            <span>ยอดรวมทั้งหมด:</span>
+                            <span id="total-amount">0.00 บาท</span>
+                        </div>
+                    </div>
+
+                    <button id="checkout-button" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg mt-6 transition duration-200">
+                        ยืนยันการสั่งซื้อ
+                    </button>
+                    <button id="capture-summary-button" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg mt-3 transition duration-200">
+                        แคปหน้าจอสรุปออเดอร์
+                    </button>
+                    <p class="text-xs text-gray-500 text-center mt-2">ยอดรวมทั้งหมดจะอัปเดตอัตโนมัติ</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="capture-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-lg p-6 max-w-lg w-full relative">
+            <button id="close-modal-button" class="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-2xl font-bold">&times;</button>
+            <h3 class="text-xl font-semibold mb-4">ภาพสรุปรายการสั่งซื้อ</h3>
+            <div id="captured-image-container" class="border border-gray-300 rounded-lg overflow-hidden flex justify-center items-center">
+                </div>
+            <a id="download-image-button" class="block w-full text-center bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg mt-4" download="order-summary.png">
+                ดาวน์โหลดภาพ
+            </a>
+        </div>
+    </div>
+
+
+    <script src="data.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
